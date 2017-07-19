@@ -24,6 +24,6 @@ pip install tqdm urllib numpy scikit-learn pandas argparse zipfile shutil
 For the DMOZ Dataset you can start the training step by: 
 
 ```
-python DSNC_DMOZ_Train_Triplet.py --code-size 36 --dataset 1K
+python DSNC_DMOZ_Train_Triplet.py --code-size 36 --dataset 1K --iteration 100
 ```
 For DMOZ the dataset used will be automatically downloaded, for Imagenet you must Download the Imagenet 2012 Dataset and get the last layer of RESNET-152. For Aloi you must Download The aloi Dataset from https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass.html
