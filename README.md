@@ -16,7 +16,8 @@ Implementation of the paper Binary-Stochastic-Representations-for-Large-Multi-cl
 
 ## Example ##
 
-For the DMOZ Dataset : 
-'''
+For the DMOZ Dataset you can start the training step by: 
+
+```
 python DSNC_Train_Triplet.py --code-size 36 --dataset 1K
-'''
+```
