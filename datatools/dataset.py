@@ -318,10 +318,9 @@ def DMOZ_12K_data():
     set_config('DMOZ12K', cfg)
     print(cfg)
     list_file = []
-    for f1 in os.listdir(cfg['dataset_root_data_path']):
-        rpath = os.path.join(cfg['dataset_root_data_path'], f1)
-        list_file.append({'train': os.path.join(rpath, 'train.txt'),
-                          'test': os.path.join(rpath, 'test.txt'),
-                          'validation': os.path.join(rpath, 'validation.txt')
-                          })
+    rpath = cfg['dataset_root_data_path']
+    list_file.append({'train': os.path.join(rpath, 'train.txt'),
+                      'test': os.path.join(rpath, 'test.txt'),
+                      'validation': os.path.join(rpath, 'validation.txt')
+                      })
     return list_file
