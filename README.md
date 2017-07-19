@@ -13,3 +13,10 @@ Implementation of the paper Binary-Stochastic-Representations-for-Large-Multi-cl
 * argparse
 * zipfile
 * shutil
+
+## Example ##
+
+For the DMOZ Dataset : 
+'''
+python DSNC_Train_Triplet.py --code-size 36 --dataset 1K
+'''
