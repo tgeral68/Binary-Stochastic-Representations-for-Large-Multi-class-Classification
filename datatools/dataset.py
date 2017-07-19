@@ -7,7 +7,7 @@ import os
 
 from random import randint
 from torch.utils.data import Dataset
-from .downloader import DMOZ1KDownloader
+from .downloader import DMOZ1KDownloader, DMOZ12KDownloader
 # A json datasets loader which
 # take json containing two keys
 # 'X' and 'Y'
@@ -299,7 +299,7 @@ def DMOZ_12K_data():
         except Exception:
             pass
         os.makedirs(dataset_path)
-        usual = DMOZ1KDownloader(dataset_path)['usual']
+        usual = DMOZ12KDownloader(dataset_path)['usual']
         set_config('DMOZ12K', {'path': dataset_path,
                    'zip': usual})
 

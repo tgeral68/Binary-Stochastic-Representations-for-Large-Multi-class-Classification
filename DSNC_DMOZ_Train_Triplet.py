@@ -265,7 +265,7 @@ def main(args):
                        dvalidation,
                        optimizer,
                        nn.NLLLoss(size_average=True),
-                       iteration=args.iteration
+                       nb_iteration=args.iteration
                        )
             # -------------------------------------------------------------- #
             # evaluate the model

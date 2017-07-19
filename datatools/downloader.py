@@ -36,3 +36,9 @@ def DMOZ1KDownloader(folder):
     download_progress_bar(root+'DMOZ1K.zip',
                           join(folder, 'DMOZ1K.zip'))
     return {'usual': 'DMOZ1K.zip'}
+
+def DMOZ12KDownloader(folder):
+    root = 'http://webia.lip6.fr/~gerald/data/'
+    download_progress_bar(root+'DMOZ12K.zip',
+                          join(folder, 'DMOZ12K.zip'))
+    return {'usual': 'DMOZ12K.zip'}
