@@ -13,7 +13,12 @@ Implementation of the paper Binary-Stochastic-Representations-for-Large-Multi-cl
 * argparse
 * zipfile
 * shutil
-
+To install all the dependency package you can use pip as following:
+```
+pip install http://download.pytorch.org/whl/cu80/torch-0.1.12.post2-cp35-cp35m-linux_x86_64.whl 
+pip install torchvision
+pip install tqdm urllib numpy scikit-learn pandas argparse zipfile shutil
+```
 ## Example ##
 
 For the DMOZ Dataset you can start the training step by: 
