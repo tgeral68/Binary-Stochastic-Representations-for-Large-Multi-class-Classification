@@ -165,6 +165,34 @@ class T7Dataset(Dataset):
         return len(self.X)
 
 
+# a generic dataset allowing to get triplet given:
+# - X the input tensor
+# - Y the class tensor
+class GenericDatasetTriplet(Dataset):
+    def __init__(self, X, Y):
+        super(GenericDatasetTriplet, self).__init__()
+        self.classr_dict = {}
+        for i in range(self.Y.size(0)):
+            if(self.Y[i] not in self.classr_dict):
+                self.classr_dict[self.Y[i]] = []
+            self.classr_dict[self.Y[i]].append(i)
+
+    def __getitem__(self, index):
+        # get a random example
+        adv1 = randint(0, len(self.X)-1)
+        # get an exemple in an other class
+        index_sc = randint(0, len(self.classr_dict[self.Y[index]])-1)
+        adv2 = self.classr_dict[self.Y[index]][index_sc]
+
+        return torch.cat((self.X.__getitem__(index).unsqueeze(1),
+                          self.X.__getitem__(adv1).unsqueeze(1),
+                          self.X.__getitem__(adv2).unsqueeze(1)), 1),\
+            torch.LongTensor([self.Y.__getitem__(index)])
+
+    def __len__(self):
+        return (len(self.X))
+
+
 class T7DatasetTriplet(T7Dataset):
     def __init__(self, filepath=''):
         super(T7DatasetTriplet, self).__init__(filepath=filepath)
@@ -185,7 +213,6 @@ class T7DatasetTriplet(T7Dataset):
 
     def __len__(self):
         return (len(self.X))
-
 
 class T7DatasetMF(T7Dataset):
     def __init__(self, folderpath='', train=True):
@@ -316,6 +343,44 @@ def DMOZ_12K_data():
             cfg['dataset_root_data_path'] = os.path.join(folder_path,
                                                          '12k_class')
     set_config('DMOZ12K', cfg)
+    print(cfg)
+    list_file = []
+    rpath = cfg['dataset_root_data_path']
+    list_file.append({'train': os.path.join(rpath, 'train.txt'),
+                      'test': os.path.join(rpath, 'test.txt'),
+                      'validation': os.path.join(rpath, 'validation.txt')
+                      })
+    return list_file
+
+
+def ALOI_data():
+    cfg = get_config('ALOI')
+    # dataset not downloaded
+    if(cfg is None):
+        dataset_path = os.path.realpath(os.path.join(default_dataset_path,
+                                        'ALOI/'))
+        try:
+            shutil.rmtree(dataset_path)
+        except Exception:
+            pass
+        os.makedirs(dataset_path)
+        usual = ALOIDownloader(dataset_path)['usual']
+        set_config('ALOI', {'path': dataset_path,
+                   'zip': usual})
+
+        cfg = get_config('ALOI')
+    # dataset not decompressed
+    if('dataset_root_data_path' not in cfg):
+        folder_path = cfg['path']
+        # decompress usual
+        if(not os.path.exists(os.path.join(folder_path, '12k_class'))):
+            cp_path = os.path.join(cfg['path'], cfg['zip'])
+            zip_ref = zipfile.ZipFile(cp_path, 'r')
+            zip_ref.extractall(cfg['path'])
+            zip_ref.close()
+            cfg['dataset_root_data_path'] = os.path.join(folder_path,
+                                                         '12k_class')
+    set_config('ALOI', cfg)
     print(cfg)
     list_file = []
     rpath = cfg['dataset_root_data_path']

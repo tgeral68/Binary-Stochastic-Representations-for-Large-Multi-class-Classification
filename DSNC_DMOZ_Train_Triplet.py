@@ -244,7 +244,9 @@ def main(args):
 
         for code_size_str in args.code_size:
             code_size = int(code_size_str)
-
+            if(code_size not in accuracy):
+                accuracy[code_size] = []
+                accuracy_kd[code_size] = []
             # building the model
             model = STEECOCSparseLinearTriplet(code_size,
                                                len(dtrain.word_index_map)+1,
@@ -321,8 +323,8 @@ def main(args):
             except Exception:
                 pass
             torch.save({"model": best_model, "logs": logs},
-                       './logs/'+args.prefix+'_\
-    ste_DMOZ_triplet_'+str(code_size)+'_'+str(dfolder)+'.pytorch')
+                       './log/'+args.prefix+'_\
+    ste_DMOZ_triplet_'+str(code_size)+'_'+str(dmoz_set['train'].split('/')[-2])+'.pytorch')
 
     print(pd.DataFrame(accuracy))
     print(pd.DataFrame(accuracy_kd))
