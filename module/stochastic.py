@@ -70,16 +70,25 @@ class StraightThroughEstimator(nn.Module):
 
 
 class STEECOCSparseLinearTriplet(nn.Module):
-    def __init__(self, code_size, vocabulary_size, nb_classe):
+    def __init__(self, code_size, vocabulary_size, nb_classe, sparse=False):
         super(STEECOCSparseLinearTriplet, self).__init__()
-        self.encoder = SparseLinear(vocabulary_size, code_size)
+        self.vocabulary_size = vocabulary_size
+        self.code_size = code_size
+        if(sparse):
+            self.encoder = SparseLinear(self.vocabulary_size,
+                                        self.code_size)
+        else:
+            self.encoder = nn.Linear(self.vocabulary_size, self.code_size)
+        
         self.ste = StraightThroughEstimator()
         self.decoder = nn.Linear(code_size, nb_classe)
         self.training = True
 
     def forward(self, v):
 
-        if(self.training):
+        if(self.training and v.dim() == 4):
+
+
             keys1 = v[:, :, 0, 0].long()
             values1 = v[:, :, 1, 0]
             self.cencoded1 = self.encoder((keys1, values1))
@@ -95,15 +104,34 @@ class STEECOCSparseLinearTriplet(nn.Module):
             return self.decoder(self.ccode1),\
                 self.decoder(self.ccode2),\
                 self.decoder(self.ccode2)
+        elif(self.training and v.dim() == 3):
+
+            values1 = v[:, :, 0]
+
+            self.cencoded1 = self.encoder(values1)
+            self.ccode1 = self.ste(self.cencoded1)
+            values2 = v[:, :, 1]
+            values3 = v[:, :, 2]
+            self.cencoded2 = self.encoder(values2)
+            self.ccode2 = self.ste(self.cencoded2)
+            self.cencoded3 = self.encoder(values3)
+            self.ccode3 = self.ste(self.cencoded3)
+            return self.decoder(self.ccode1),\
+                self.decoder(self.ccode2),\
+                self.decoder(self.ccode2)
         else:
             keys1 = 0
             values1 = 0
             if(v.dim() == 3):
                 keys1 = v[:, :, 0].long()
                 values1 = v[:, :, 1]
-            else:
+            elif(v.dim() == 4):
                 keys1 = v[:, :, 0, 0].long()
                 values1 = v[:, :, 1, 0]
-            self.cencoded1 = self.encoder((keys1, values1))
-            self.ccode1 = self.ste(self.cencoded1)
+            if(v.dim() == 2):
+                self.cencoded1 = self.encoder(v)
+                self.ccode1 = self.ste(self.cencoded1)
+            else:
+                self.cencoded1 = self.encoder((keys1, values1))
+                self.ccode1 = self.ste(self.cencoded1)
             return self.decoder(self.ccode1)

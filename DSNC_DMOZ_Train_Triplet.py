@@ -22,8 +22,8 @@ from module.stochastic import STEECOCSparseLinearTriplet
 from module.sparse import SparseLinear, EmbeddingSum
 
 # data loader and tools
-from datatools.dataset import TXTDataset, TXTDatasetTriplet, DMOZ_1K_data,\
-    DMOZ_12K_data
+from datatools.dataset import DMOZ_1K_data,\
+    DMOZ_12K_data, ALOI_data
 
 
 # usefull functions to build the ecoc codes
@@ -104,6 +104,7 @@ def fit(model, dataset_train, dataset_validation, optimizer, criterion,
                 copy_(torch.randperm(len(dataset_train)))
             randperm = torch.split(selector, batch_size)
             model.ste.slope = model.ste.slope * 1.0001
+
             for k, d in enumerate(dataloader):
                 optimizer.zero_grad()
                 x, y = Variable(d[0]), Variable(d[1])
@@ -224,22 +225,24 @@ def main(args):
         list_dataset_path = DMOZ_1K_data()
     elif(args.dataset == '12K'):
         list_dataset_path = DMOZ_12K_data()
+    elif(args.dataset == 'ALOI'):
+        list_dataset_path = ALOI_data()
     # log view at the end of the learning process
     accuracy = {}  # best validation accuracy
     accuracy_kd = {}  # best validation accuracy by knn
     st = 0.  # time variable
     # for each set
-    for dmoz_set in list_dataset_path:
+    for dataset in list_dataset_path:
         print("Loading data...", end=" ")
         sys.stdout.flush()
         st = time.time()
-        dtrain = TXTDatasetTriplet(dmoz_set['train'], class_map={})
-        dvalidation = TXTDataset(dmoz_set['validation'],
-                                 word_index_map=dtrain.word_index_map,
-                                 class_map=dtrain.class_map)
-        dtest = TXTDataset(dmoz_set['test'],
-                           word_index_map=dtrain.word_index_map,
-                           class_map=dtrain.class_map)
+        dtrain = dataset['train']
+        dtrain.build()
+        dtest = dataset['test']
+        dtest.build()
+        dvalidation = dataset['validation']
+        dvalidation.build()
+
         print(str(time.time() - st)[0:5]+'s')
 
         for code_size_str in args.code_size:
@@ -248,9 +251,11 @@ def main(args):
                 accuracy[code_size] = []
                 accuracy_kd[code_size] = []
             # building the model
+
             model = STEECOCSparseLinearTriplet(code_size,
-                                               len(dtrain.word_index_map)+1,
-                                               len(dtrain.class_map))
+                                               len(dtrain.word_index_map),
+                                               len(dtrain.class_map),
+                                               sparse=dtrain.sparse)
 
             # define the optimization method
             optimizer = optim.Adam(model.parameters(),
@@ -325,6 +330,9 @@ def main(args):
             torch.save({"model": best_model, "logs": logs},
                        './log/'+args.prefix+'_\
     ste_DMOZ_triplet_'+str(code_size)+'_'+str(dmoz_set['train'].split('/')[-2])+'.pytorch')
+            dtrain.clear()
+            dtest.clear()
+            dvalidation.clear()
 
     print(pd.DataFrame(accuracy))
     print(pd.DataFrame(accuracy_kd))

@@ -46,8 +46,7 @@ def DMOZ12KDownloader(folder):
 
 
 def ALOIDownloader(folder):
-    root = 'https://www.csie.ntu.edu.tw/~cjlin/libsvmtools\
-        /datasets/multiclass/'
-    download_progress_bar(root+'aloi.scale.bz2',
+    url = 'https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/aloi.scale.bz2'
+    download_progress_bar(url,
                           join(folder, 'aloi.scale.bz2'))
     return {'usual': 'aloi.scale.bz2'}
