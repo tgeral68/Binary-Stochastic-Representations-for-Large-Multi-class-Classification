@@ -32,5 +32,7 @@ For DMOZ the dataset used will be automatically downloaded, for Imagenet you mus
 
 ### Option ###
 * --dataset - The dataset to train the model (you can add yours see dataset to know how)
- ** 1k, 12K, ALOI
+  * 1k, 12K, ALOI
 * --code_size The number of bits to use in the representation space
+* -h show all the options description
+
