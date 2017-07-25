@@ -19,7 +19,7 @@ from .compression_tools import decompress
 
 class TrainEvalDataset(Dataset):
     def __init__(self):
-        self.train = True
+        self.train = False
 
     def isTrain(self):
         self.train
@@ -181,7 +181,9 @@ class TXTDataset(TrainEvalDataset):
         if(self.isEval()):
             return self.X.__getitem__(index), \
                 self.Y.__getitem__(index)
+
         else:
+
             adv1 = randint(0, len(self.X)-1)
             adv2 = self.classr_dict[self.Y[index]]\
                 [randint(0, len(self.classr_dict[self.Y[index]])-1)]

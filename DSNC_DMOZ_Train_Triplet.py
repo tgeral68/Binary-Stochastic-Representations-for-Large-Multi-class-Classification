@@ -278,14 +278,17 @@ def main(args):
             # evaluate the model
             best_model = torch.load(logs['best_model_path'])
             best_model.cpu()
-            dataloader = DataLoader(dtest, batch_size=1000)
+
             best_model.eval()
             acc_test = 0
             best_model.eval()
+
+            dataloader = DataLoader(dtest, batch_size=1000)
             for k, d in enumerate(dataloader):
-                optimizer.zero_grad()
-                x, y = Variable(d[0]), Variable(d[1])
-                p = best_model(x)
+
+                xd, y = Variable(d[0]), Variable(d[1])
+
+                p = best_model(xd)
 
                 acc_test += (y.data == p.data.max(1)[1]).sum()
             acc_test /= len(dtest)
@@ -298,6 +301,7 @@ def main(args):
             dtrain.Y = dtrain.Y.cpu()
             ground_truth_train = dtrain.Y
             ground_truth_test = dtest.Y
+            dtrain.setEval()
             train_codes, predicted_classes_train = get_codes(dtrain,
                                                              best_model)
             test_codes, predicted_classes_test = get_codes(dtest, best_model)
@@ -329,7 +333,7 @@ def main(args):
                 pass
             torch.save({"model": best_model, "logs": logs},
                        './log/'+args.prefix+'_\
-    ste_DMOZ_triplet_'+str(code_size)+'_'+str(dmoz_set['train'].split('/')[-2])+'.pytorch')
+    ste_DMOZ_triplet_'+str(code_size)+'_.pytorch')
             dtrain.clear()
             dtest.clear()
             dvalidation.clear()

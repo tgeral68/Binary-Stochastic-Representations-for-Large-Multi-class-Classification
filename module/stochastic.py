@@ -79,7 +79,7 @@ class STEECOCSparseLinearTriplet(nn.Module):
                                         self.code_size)
         else:
             self.encoder = nn.Linear(self.vocabulary_size, self.code_size)
-        
+
         self.ste = StraightThroughEstimator()
         self.decoder = nn.Linear(code_size, nb_classe)
         self.training = True
