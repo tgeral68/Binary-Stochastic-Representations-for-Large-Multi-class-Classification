@@ -486,8 +486,7 @@ def ALOI_data():
         dtest.save(os.path.join(cfg['path'], 'ALOI1K', 'test.txt'))
 
         dvalidation.remove_from_index(perm[0:int(0.8*perm.size(0)):].tolist() +
-                                      perm[int(0.8*perm.size(0)):
-                                      int(0.9*perm.size(0))].tolist())
+                                      perm[int(0.9*perm.size(0)): ].tolist())
         dvalidation.save(os.path.join(cfg['path'], 'ALOI1K', 'validation.txt'))
         cfg['dataset_root_data_path'] = os.path.join(cfg['path'], 'ALOI1K')
         set_config('ALOI', cfg)

@@ -242,9 +242,9 @@ def main(args):
         dtest.build()
         dvalidation = dataset['validation']
         dvalidation.build()
-
+        print(len(dtrain) +  len(dtest) + len(dvalidation))
         print(str(time.time() - st)[0:5]+'s')
-
+'''
         for code_size_str in args.code_size:
             code_size = int(code_size_str)
             if(code_size not in accuracy):
@@ -340,7 +340,7 @@ def main(args):
 
     print(pd.DataFrame(accuracy))
     print(pd.DataFrame(accuracy_kd))
-
+'''
 
 if __name__ == "__main__":
     main(args)

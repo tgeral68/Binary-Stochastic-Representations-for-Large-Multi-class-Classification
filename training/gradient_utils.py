@@ -60,6 +60,18 @@ class MultiVariable(Object):
         return MultiVariable([self.variable_list[i] - (other_multivariable[i])
                              for i in range(len(self.variable_list))])
 
+    def sum(self):
+        vsum = self.variable_list[0].sum()
+        for i in range(1, len(self.variable_list)):
+            vsum += self.variable_list[i].sum()
+        return vsum
+
+    def mean(self):
+        vmean = self.variable_list[0].sum()
+        for i in range(1, len(self.variable_list)):
+            vmean += self.variable_list[i].mean()
+        return vmean
+
     def get_data(self):
         tensor_list = []
         for i in range(len(self.variable_list)):
