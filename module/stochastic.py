@@ -9,46 +9,22 @@ from .sparse import SparseLinear
 # backward the output gradient
 
 
-class BernoulliNoGrad_func(Function):
-    def __init__(self):
-        super(BernoulliNoGrad_func, self).__init__()
+# A gradient estimor for a bernouilli sampling
+class BernoulliNoGrad_func(torch.autograd.Function):
+    """
+        Sample over n bernouilli distribution (vector in [0,1[^n)
+        and use as backward value the gradient of the identity 
+        function
+    """
 
-    def forward(self, probs):
-        return probs.new().resize_as_(probs).bernoulli_(probs)
+    @staticmethod
+    def forward(ctx, input):
 
-    def backward(self, grad_output):
+        return torch.bernoulli(input)
+
+    @staticmethod
+    def backward(ctx, grad_output):
         return grad_output
-
-
-class BernoulliNoGrad_func2(Function):
-    def __init__(self):
-        super(BernoulliNoGrad_func2, self).__init__()
-
-    def forward(self, probs):
-        return probs.new().resize_as_(probs).\
-            bernoulli_((probs/2.) + 0.5) * 2 - 1
-
-    def backward(self, grad_output):
-        return grad_output
-# a bernouilli sampling function which
-# allow reinforce
-
-
-class BernoulliUnit(nn.Module):
-    def __init__(self):
-        super(BernoulliUnit, self).__init__()
-
-    def forward(self, policy):
-        self.a = functional.sigmoid(policy)
-        self.action = self.a.bernoulli()
-        return self.action
-
-    def reinforce(self, reward):
-        self.action.reinforce(reward)
-
-# a module applying the algorithm described
-# in "Estimating or Propagating Gradients Through
-# Stochastic Neurons for Conditional Computation"
 
 
 class StraightThroughEstimator(nn.Module):
@@ -61,12 +37,12 @@ class StraightThroughEstimator(nn.Module):
     def forward(self, policy):
         if(self.stochastic):
             policy.data.mul_(self.slope)
-            self.a = functional.sigmoid(policy)
+            self.a = torch.sigmoid(policy)
 
-            return self.func_module(self.a)
+            return self.func_module.apply(self.a)
         else:
-            # only for forward
-            return torch.round((functional.sigmoid(policy)))
+            # generally used for prediction step
+            return torch.round((torch.sigmoid(policy)))
 
 
 class STEECOCSparseLinearTriplet(nn.Module):
@@ -105,7 +81,6 @@ class STEECOCSparseLinearTriplet(nn.Module):
                 self.decoder(self.ccode2),\
                 self.decoder(self.ccode2)
         elif(self.training and v.dim() == 3):
-
             values1 = v[:, :, 0]
 
             self.cencoded1 = self.encoder(values1)
@@ -120,6 +95,7 @@ class STEECOCSparseLinearTriplet(nn.Module):
                 self.decoder(self.ccode2),\
                 self.decoder(self.ccode2)
         else:
+
             keys1 = 0
             values1 = 0
             if(v.dim() == 3):

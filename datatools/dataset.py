@@ -125,8 +125,8 @@ class TXTDataset(TrainEvalDataset):
         self.classr_dict = {}
         for i in range(self.Y.size(0)):
             if(self.Y[i] not in self.classr_dict):
-                self.classr_dict[self.Y[i]] = []
-            self.classr_dict[self.Y[i]].append(i)
+                self.classr_dict[self.Y[i].item()] = []
+            self.classr_dict[self.Y[i].item()].append(i)
 
     def remove_from_index(self, list_index):
 
@@ -185,8 +185,8 @@ class TXTDataset(TrainEvalDataset):
         else:
 
             adv1 = randint(0, len(self.X)-1)
-            adv2 = self.classr_dict[self.Y[index]]\
-                [randint(0, len(self.classr_dict[self.Y[index]])-1)]
+            adv2 = self.classr_dict[self.Y[index].item()]\
+                [randint(0, len(self.classr_dict[self.Y[index].item()])-1)]
             return torch.cat((self.X.__getitem__(index).unsqueeze(2 if(self.sparse) else 1),
                               self.X.__getitem__(adv1).unsqueeze(2 if(self.sparse) else 1),
                               self.X.__getitem__(adv2).unsqueeze(2 if(self.sparse) else 1)), 2 if(self.sparse) else 1),\

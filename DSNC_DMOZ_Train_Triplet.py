@@ -33,7 +33,7 @@ from utils.ecoc_utils import Hamming_distanceFast
 
 # parsing the options
 parser = argparse.ArgumentParser()
-parser.add_argument('--code_size', nargs='*', default=[10],
+parser.add_argument('--code_size', nargs='*', default=[100],
                     help='Binary representation size')
 parser.add_argument('--cuda', action='store_true',
                     help='Enable gpu processing')
@@ -43,7 +43,7 @@ parser.add_argument('--learning_rate', type=float,
                     help='Learning rate', default=1e-2)
 parser.add_argument('--weight_decay', type=float,
                     help='Weight decay (l2 regularisation)', default=0.)
-parser.add_argument('--prefix', type=str, default='',
+parser.add_argument('--folder', type=str, default='tmp/',
                     help='A prefix name for saving the model')
 parser.add_argument('--dataset', type=str, default='1K',
                     help='DMOZ "1K" or "12K"'
@@ -58,7 +58,7 @@ torch.cuda.manual_seed(25)
 
 def fit(model, dataset_train, dataset_validation, optimizer, criterion,
         check_val=10, nb_iteration=50, batch_size=1000, counter_max=20,
-        cuda=False, ef=1e-6):
+        cuda=False, ef=1e-6, saving_prefix="./tmp"):
     # define log variables :
     # -the accuracy train
     # -the accuracy validation
@@ -74,13 +74,14 @@ def fit(model, dataset_train, dataset_validation, optimizer, criterion,
     losses = []
     losses_dist = []
     losses_rapr = []
-    bmp = 'tmp/'+str(time.time())+'.pytorch'
+    bmp = os.path.join(saving_prefix,str(time.time())+'.pytorch')
+    print("Best models will be saved at " + bmp)
     counter = 0
     elastica_factor = ef
     dataloader = DataLoader(dataset_train, batch_size=batch_size, shuffle=True)
     # if tmp folder does not exist we create it
     try:
-        os.makedirs('tmp')
+        os.makedirs(saving_prefix)
     except:
         pass
     # we define the selection tensor to not
@@ -119,10 +120,10 @@ def fit(model, dataset_train, dataset_validation, optimizer, criterion,
                     elastica_factor*loss_c2
                 tloss.backward()
                 optimizer.step()
-                losses[-1] += loss.data[0]
-                losses_dist[-1] += loss_c2.data[0]
-                losses_rapr[-1] += loss_c.data[0]
-                at[-1] += (y.data == p.data.max(1)[1]).sum()
+                losses[-1] += loss.item()
+                losses_dist[-1] += loss_c2.item()
+                losses_rapr[-1] += loss_c.item()
+                at[-1] += (y.data == p.data.max(1)[1]).sum().item()
             at[-1] /= len(dataset_train)
             at[-1] = ((at[-1] * 10000)//1)/100
             losses[-1] /= len(dataset_train)
@@ -148,13 +149,14 @@ def fit(model, dataset_train, dataset_validation, optimizer, criterion,
                     y_truth = dataset_validation.Y[d]
                     if(cuda):
                         y_truth = y_truth.cuda()
-                    av[-1] += (y_truth == p.data.max(1)[1]).sum()
+                    av[-1] += (y_truth == p.data.max(1)[1]).sum().item()
                 av[-1] = (((float(av[-1])/len(dataset_validation))
                            * 10000)//1)/100
-                # if we reach the best validation
-                # we save thel model
+                ''' if we reach the best validation
+                we save the model'''
                 if(av[-1] > bv):
-                    torch.save(model, bmp)
+
+                    torch.save(model.state_dict(), bmp)
                     bv = av[-1]
 
                     elastica_factor *= 2.
@@ -244,7 +246,7 @@ def main(args):
         dvalidation.build()
         print(len(dtrain) +  len(dtest) + len(dvalidation))
         print(str(time.time() - st)[0:5]+'s')
-'''
+
         for code_size_str in args.code_size:
             code_size = int(code_size_str)
             if(code_size not in accuracy):
@@ -272,11 +274,18 @@ def main(args):
                        dvalidation,
                        optimizer,
                        nn.NLLLoss(size_average=True),
-                       nb_iteration=args.iteration
+                       nb_iteration=args.iteration,
+                       saving_prefix=args.folder
                        )
             # -------------------------------------------------------------- #
             # evaluate the model
-            best_model = torch.load(logs['best_model_path'])
+            state_dict = torch.load(logs['best_model_path'])
+            best_model = STEECOCSparseLinearTriplet(code_size,
+                                               len(dtrain.word_index_map),
+                                               len(dtrain.class_map),
+                                               sparse=dtrain.sparse)
+            best_model.ste.stochastic = False
+            best_model.load_state_dict(state_dict)
             best_model.cpu()
 
             best_model.eval()
@@ -290,7 +299,7 @@ def main(args):
 
                 p = best_model(xd)
 
-                acc_test += (y.data == p.data.max(1)[1]).sum()
+                acc_test += (y.data == p.data.max(1)[1]).sum().item()
             acc_test /= len(dtest)
             acc_test = ((acc_test * 10000)//1)/100
             accuracy[code_size].append(acc_test)
@@ -307,23 +316,24 @@ def main(args):
             test_codes, predicted_classes_test = get_codes(dtest, best_model)
 
             # computing knn accuracy
-            knn_index = [Hamming_distanceFast(code, train_codes).min(0)[1]
+            knn_index = [Hamming_distanceFast(code, train_codes).min(0)[1].unsqueeze(0)
                          for code in test_codes]
+
             accuracy_predicted_codes = \
                 ((predicted_classes_train.index_select(0,
                  torch.cat(knn_index, 0).squeeze())
-                 == ground_truth_test).sum())/len(dtest)
+                 == ground_truth_test).sum()).item()/len(dtest)
             accuracy_truth_codes = \
                 ((ground_truth_train.index_select(0,
                  torch.cat(knn_index, 0).squeeze())
-                 == ground_truth_test).sum())/len(dtest)
+                 == ground_truth_test).sum().item())/len(dtest)
             accuracy_kd[code_size].append((((accuracy_predicted_codes * 10000)//1)
                                           / 100, ((accuracy_truth_codes * 10000)//1)
                                                                         / 100 ))
             # saving the logs and the models
-            print(accuracy_kd[code_size])
-            print(accuracy[code_size])
-            print(best_model)
+            print("Accuracy 1nn" , accuracy_kd[code_size])
+            print("Accuracy ",accuracy[code_size])
+            #print(best_model)
             logs['accuracy_test'] = (accuracy[code_size])
             logs['accuracy_test_kd'] = (accuracy_kd[code_size])
 
@@ -331,8 +341,8 @@ def main(args):
                 os.makedirs('./log')
             except Exception:
                 pass
-            torch.save({"model": best_model, "logs": logs},
-                       './log/'+args.prefix+'_\
+            torch.save({"model": best_model.state_dict(), "logs": logs},
+                       './log/\
     ste_DMOZ_triplet_'+str(code_size)+'_.pytorch')
             dtrain.clear()
             dtest.clear()
@@ -340,7 +350,7 @@ def main(args):
 
     print(pd.DataFrame(accuracy))
     print(pd.DataFrame(accuracy_kd))
-'''
+
 
 if __name__ == "__main__":
     main(args)
