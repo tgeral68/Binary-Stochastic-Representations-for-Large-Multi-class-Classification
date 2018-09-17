@@ -77,7 +77,7 @@ def fit(model, dataset_train, dataset_validation, optimizer, criterion,
     bmp = os.path.join(saving_prefix,str(time.time())+'.pytorch')
     print("Best models will be saved at " + bmp)
     counter = 0
-    elastica_factor = ef
+    elastic_factor = ef
     dataloader = DataLoader(dataset_train, batch_size=batch_size, shuffle=True)
     # if tmp folder does not exist we create it
     try:
@@ -107,24 +107,25 @@ def fit(model, dataset_train, dataset_validation, optimizer, criterion,
                 optimizer.zero_grad()
  
                 x, y = d[0].cuda() if(cuda) else d[0], d[1].cuda() if(cuda) else d[1]
-                print(y)
+
                 p, p2, p3 = model(x)
 
-                loss = criterion(F.log_softmax(p),  y[:, 0].cuda())
+                loss = criterion(F.log_softmax(p),  y[:, 0].cuda() if(cuda) else y[:, 0])
                 loss_c = (((model.cencoded1.sigmoid() - model.cencoded3.sigmoid()))**2).sum(1).sum()
                 loss_c2 = (model.cencoded1.size(1) - (((model.cencoded1.sigmoid() - model.cencoded2.sigmoid()))**2).sum(1)).sum()
                 tloss = loss\
                     +\
-                    elastica_factor*loss_c +\
-                    elastica_factor*loss_c2
+                    elastic_factor*loss_c +\
+                    elastic_factor*loss_c2
                 tloss.backward()
                 optimizer.step()
                 losses[-1] += loss.item()
                 losses_dist[-1] += loss_c2.item()
                 losses_rapr[-1] += loss_c.item()
-                at[-1] += (y.cuda() == p.data.max(1)[1]).sum().item()
-            at[-1] /= len(dataset_train)
-            at[-1] = ((at[-1] * 10000)//1)/100
+
+                at[-1] += (y[:, 0] == p.data.max(1)[1]).sum().item()
+            at[-1] = (((float(at[-1])/len(dataset_train))
+                           * 10000)//1)/100
             losses[-1] /= len(dataset_train)
             losses_dist[-1] /= len(dataset_train)
             losses_rapr[-1] /= len(dataset_train)
@@ -158,10 +159,10 @@ def fit(model, dataset_train, dataset_validation, optimizer, criterion,
                     torch.save(model.state_dict(), bmp)
                     bv = av[-1]
 
-                    elastica_factor *= 2.
+                    elastic_factor *= 2.
                     counter = 0
                 else:
-                    elastica_factor /= 2.
+                    elastic_factor /= 2.
                     counter += 1
             progress_bar.set_postfix(
                                      loss=losses[-1],
@@ -170,7 +171,7 @@ def fit(model, dataset_train, dataset_validation, optimizer, criterion,
                                      bv=str(bv)+'%',
                                      ld=losses_dist[-1],
                                      lr=losses_rapr[-1],
-                                     elas=elastica_factor
+                                     elas=elastic_factor
                                     )
             # if no increasing validation performances -> quit
             if(counter > counter_max):
