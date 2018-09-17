@@ -84,13 +84,12 @@ def fit(model, dataset_train, dataset_validation, optimizer, criterion,
         os.makedirs(saving_prefix)
     except:
         pass
-    # we define the selection tensor to not
-    # allocate a new tensor at each times
-    # and allowing to select even with cuda
-    selector = dataset_train.X.new().long()
 
-    # surrounded by try and catch to save
-    # even if there is memory error
+    # if use cuda set the model to gpu
+    if(cuda):
+        model.cuda()
+        criterion.cuda()
+
     try:
         progress_bar = tqdm.trange(nb_iteration)
         for i, pb in enumerate(progress_bar):
@@ -99,19 +98,19 @@ def fit(model, dataset_train, dataset_validation, optimizer, criterion,
             losses_dist.append(.0)
             losses_rapr.append(.0)
             at.append(.0)
-            if(cuda):
-                selector = selector.cuda()
-            selector.resize_(len(dataset_train)).\
-                copy_(torch.randperm(len(dataset_train)))
-            randperm = torch.split(selector, batch_size)
+
             model.ste.slope = model.ste.slope * 1.0001
+            if(cuda):
+                model.cuda()
 
             for k, d in enumerate(dataloader):
                 optimizer.zero_grad()
-                x, y = Variable(d[0]), Variable(d[1])
+ 
+                x, y = d[0].cuda() if(cuda) else d[0], d[1].cuda() if(cuda) else d[1]
+                print(y)
                 p, p2, p3 = model(x)
 
-                loss = criterion(F.log_softmax(p),  y[:, 0])
+                loss = criterion(F.log_softmax(p),  y[:, 0].cuda())
                 loss_c = (((model.cencoded1.sigmoid() - model.cencoded3.sigmoid()))**2).sum(1).sum()
                 loss_c2 = (model.cencoded1.size(1) - (((model.cencoded1.sigmoid() - model.cencoded2.sigmoid()))**2).sum(1)).sum()
                 tloss = loss\
@@ -123,7 +122,7 @@ def fit(model, dataset_train, dataset_validation, optimizer, criterion,
                 losses[-1] += loss.item()
                 losses_dist[-1] += loss_c2.item()
                 losses_rapr[-1] += loss_c.item()
-                at[-1] += (y.data == p.data.max(1)[1]).sum().item()
+                at[-1] += (y.cuda() == p.data.max(1)[1]).sum().item()
             at[-1] /= len(dataset_train)
             at[-1] = ((at[-1] * 10000)//1)/100
             losses[-1] /= len(dataset_train)
@@ -135,6 +134,8 @@ def fit(model, dataset_train, dataset_validation, optimizer, criterion,
                 model.eval()
                 # new entry for accuracy logs
                 av.append(.0)
+                model.cpu()
+                selector = torch.rand(1).long()
                 selector = selector.cpu()
                 selector.resize_(len(dataset_validation)).\
                     copy_(torch.randperm(len(dataset_validation)))
@@ -143,12 +144,10 @@ def fit(model, dataset_train, dataset_validation, optimizer, criterion,
                     key = Variable(dataset_validation.
                                    X[d])
                     if(cuda):
-                        key = key.cuda()
+                        key = key
 
                     p = model(key)
                     y_truth = dataset_validation.Y[d]
-                    if(cuda):
-                        y_truth = y_truth.cuda()
                     av[-1] += (y_truth == p.data.max(1)[1]).sum().item()
                 av[-1] = (((float(av[-1])/len(dataset_validation))
                            * 10000)//1)/100
@@ -213,8 +212,6 @@ def get_codes(dataset, model, batch_size=1000):
     for data in dataloader:
         x, y = Variable(data[0]), Variable(data[1])
         p = model(x)
-        # print(p.data.max(1)[1])
-        # print(predict)
         predict = torch.cat((predict, p.data.max(1)[1]), 0)
         code = torch.cat((code, model.ccode1.data), 0)
     return code, predict

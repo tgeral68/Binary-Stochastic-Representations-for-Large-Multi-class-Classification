@@ -46,6 +46,7 @@ For DMOZ the datasets used in the paper will be automatically downloaded in data
 
 For Aloi you must Download The aloi Dataset from https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass.html
 
+<!-- 
 ### Evaluate a model ###
 ```
 python eval.py  --dataset 1K --folder ./tmp
@@ -53,7 +54,7 @@ python eval.py  --dataset 1K --folder ./tmp
 
 Evaluate models in ./tmp on the DMOZ-1K dataset: mean accuracy using standart KNN on the embeddings.
 
-
+ -->
 
 ### Option ###
 * --dataset - The dataset to train the model (you can add yours see dataset to know how)
@@ -65,4 +66,3 @@ Evaluate models in ./tmp on the DMOZ-1K dataset: mean accuracy using standart KN
 * --weight_decay l2 regularization (default: 0)
 * --cuda use gpu (currently broken)
 * -h show all the options description
-

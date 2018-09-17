@@ -22,19 +22,12 @@ class SparseLinear(nn.Module):
         if(type(x) == tuple):
             index, weight = x
         else:
+
             index, weight = x[:, :, 0].long(), x[:, :, 1]
 
         embed = self.embedding(index)
         return weight.unsqueeze(2).expand_as(embed).mul(embed).sum(1).squeeze()
 
-
-# from module.sparse import SparseLinear
-# from  torch.autograd import Variable
-# import torch
-# module = SparseLinear(5,10)
-# w = torch.rand(3,7)
-# x = (torch.rand(3,7)*5).long()
-# module(Variable(x),Variable(w))
 
 class EmbeddingSum(nn.Module):
     def __init__(self, input_size, output_size):

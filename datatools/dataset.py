@@ -427,6 +427,7 @@ def DMOZ_12K_data():
 
     rpath = cfg['dataset_root_data_path']
     train = TXTDataset(os.path.join(rpath, 'train.txt'), sparse=True)
+    train.setTrain()
     test = TXTDataset(os.path.join(rpath, 'test.txt'), sparse=True,
                       word_index_map=train.word_index_map,
                       class_map=train.class_map)
