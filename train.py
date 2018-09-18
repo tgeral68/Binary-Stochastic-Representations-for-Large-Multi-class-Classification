@@ -51,8 +51,8 @@ args = parser.parse_args()
 
 
 # defining the seed
-torch.manual_seed(25)
-torch.cuda.manual_seed(25)
+torch.manual_seed(args.seed)
+torch.cuda.manual_seed(args.seed)
 
 
 def fit(model, dataset_train, dataset_validation, optimizer, criterion,
