@@ -1,4 +1,3 @@
-import sklearn
 import numpy as np
 import urllib.request as req
 from tqdm import tqdm

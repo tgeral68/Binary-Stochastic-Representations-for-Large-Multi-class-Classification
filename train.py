@@ -19,16 +19,14 @@ from torch.nn import functional as F
 
 # sparse modules
 from module.stochastic import STEECOCSparseLinearTriplet
-from module.sparse import SparseLinear, EmbeddingSum
+from module.sparse import SparseLinear
 
 # data loader and tools
 from datatools.dataset import DMOZ_1K_data,\
     DMOZ_12K_data, ALOI_data
 
 
-# usefull functions to build the ecoc codes
-from utils.ecoc_utils import MHamming_random_codes_fast
-from utils.ecoc_utils import Hamming_distanceFast
+from tools.distance import hamming
 
 
 # parsing the options
@@ -48,6 +46,7 @@ parser.add_argument('--folder', type=str, default='tmp/',
 parser.add_argument('--dataset', type=str, default='1K',
                     help='DMOZ "1K" or "12K"'
                     )
+parser.add_argument("--seed", type=int, default=42)
 args = parser.parse_args()
 
 
@@ -312,9 +311,9 @@ def main(args):
             train_codes, predicted_classes_train = get_codes(dtrain,
                                                              best_model)
             test_codes, predicted_classes_test = get_codes(dtest, best_model)
-
+            print(test_codes)
             # computing knn accuracy
-            knn_index = [Hamming_distanceFast(code, train_codes).min(0)[1].unsqueeze(0)
+            knn_index = [hamming(code, train_codes).min(0)[1].unsqueeze(0)
                          for code in test_codes]
 
             accuracy_predicted_codes = \
@@ -329,8 +328,10 @@ def main(args):
                                           / 100, ((accuracy_truth_codes * 10000)//1)
                                                                         / 100 ))
             # saving the logs and the models
-            print("Accuracy 1nn" , accuracy_kd[code_size])
-            print("Accuracy ",accuracy[code_size])
+            print(accuracy_kd)
+            print("Test Accuracy Nearest Neighbor obtain through predicted train labels :" , accuracy_kd[code_size][0][0])
+            print("Test Accuracy Nearest Neighbor obtain through truth train labels :" , accuracy_kd[code_size][0][1])
+            print("Test Accuracy Linear binary :",accuracy[code_size])
             #print(best_model)
             logs['accuracy_test'] = (accuracy[code_size])
             logs['accuracy_test_kd'] = (accuracy_kd[code_size])
